@@ -11,3 +11,20 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+# Builds
+bin/
+obj/
+
+# Rider / VS / VSCode
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Logs / db
+*.log
+*.db
+data/
+
+# Test artifacts
+TestResults/
