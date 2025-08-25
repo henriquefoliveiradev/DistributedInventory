@@ -17,3 +17,15 @@
       context: .
       dockerfile: WebApplication1/Dockerfile
 
+  distributedinventory.api-1:
+    image: distributedinventory.api-1
+    build:
+      context: .
+      dockerfile: DistributedInventory.Api/Dockerfile
+
+  distributedinventory.workers:
+    image: distributedinventory.workers
+    build:
+      context: .
+      dockerfile: DistributedInventory.Workers/Dockerfile
+
