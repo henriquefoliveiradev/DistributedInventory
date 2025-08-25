@@ -1,4 +1,4 @@
-using DistributedInventory.Core.Models;
+using DistributedInventory.Core.Models.Entities;
 using DistributedInventory.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,27 +17,31 @@ namespace DistributedInventory.Workers
             _logger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 using IServiceScope scope = _scopeFactory.CreateScope();
-                AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                await using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                List<OutboxEvent> recordsPending = await db.Outbox.Where(record => record.ProcessedAt == null)
-                    .OrderBy(record => record.OccurredAt).Take(25).ToListAsync(stoppingToken);
+                List<OutboxEvent> listPendings = await db.Outbox
+                    .Where(record => record.ProcessedAt == null)
+                    .OrderBy(record => record.OccurredAt)
+                    .Take(50)
+                    .ToListAsync(cancellationToken);
 
-                foreach (OutboxEvent record in recordsPending)
+                foreach (OutboxEvent msg in listPendings)
                 {
-                    // aqui você publicaria no bus; estamos só logando
-                    Console.WriteLine($"[OUTBOX] {record.Type} {record.Payload}");
-                    record.ProcessedAt = DateTime.UtcNow;
+                    // TODO: publicar no tópico; por enquanto estou so logando no console, vou deixar o link do repo no github com a versão completa implementando 
+                    //a publicação no tópico e consumo com kafka
+                    Console.WriteLine($"[OUTBOX] {msg.Type} {msg.Payload}");
+                    msg.ProcessedAt = DateTime.UtcNow;
                 }
 
-                if (recordsPending.Count > 0)
-                    await db.SaveChangesAsync(stoppingToken);
+                if (listPendings.Count > 0)
+                    await db.SaveChangesAsync(cancellationToken);
 
-                await Task.Delay(500, stoppingToken);
+                await Task.Delay(300, cancellationToken);
             }
         }
     }

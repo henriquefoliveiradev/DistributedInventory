@@ -3,7 +3,7 @@ using DistributedInventory.Core.Exceptions;
 using DistributedInventory.Core.Models.Entities;
 using DistributedInventory.Core.Services.Inventory;
 using DistributedInventory.Infrastructure.Repository;
-using DistributedInventory.Infrastructure.Repository.Services.EfInventoryService;
+using DistributedInventory.Infrastructure.Services.EfInventoryService;
 using Microsoft.EntityFrameworkCore;
 
 namespace DistributedInventory.Api
@@ -32,6 +32,7 @@ namespace DistributedInventory.Api
 
             Directory.CreateDirectory(path);
             
+            //Mock db
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -60,35 +61,17 @@ namespace DistributedInventory.Api
             app.UseAuthorization();
 
             //Endpoints
-            var summaries = new[]
-            {
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
-        
-            app.MapGet("/weatherforecast", (HttpContext httpContext) =>
-                {
-                    var forecast = Enumerable.Range(1, 5).Select(index =>
-                            new WeatherForecast
-                            {
-                                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                                TemperatureC = Random.Shared.Next(-20, 55),
-                                Summary = summaries[Random.Shared.Next(summaries.Length)]
-                            })
-                        .ToArray();
-                    return forecast;
-                })
-                .WithName("GetWeatherForecast")
-                .WithOpenApi();
-        
+            // Consulta item por loja
             app.MapGet("/v1/stores/{storeId}/stock/{sku}", async (IInventoryService service, string storeId, string sku, CancellationToken cancellationToken) =>
                 {
                     InventoryItem? item = await service.GetAsync(sku, storeId, cancellationToken);
                     if (item == null) return Results.NotFound();
                     return Results.Ok(item);
                 })
-                .WithName("stores")
+                .WithName("get item")
                 .WithOpenApi();
 
+            // Cria uma reserva
             app.MapPost("/v1/stock/reserve", async (IInventoryService service, ReserveRequest request, CancellationToken cancellationToken) =>
                 {
                     try
@@ -105,7 +88,53 @@ namespace DistributedInventory.Api
                         return Results.BadRequest(new { code = "OUT_OF_STOCK" });
                     }
                 })
-                .WithName("stock")
+                .WithName("create reserve")
+                .WithOpenApi();
+            
+            // Confirma a reserva
+            app.MapPost("/v1/stock/confirm/{reservationId}",
+                async (IInventoryService svc, Guid reservationId) =>
+                {
+                    try
+                    {
+                        await svc.ConfirmAsync(reservationId);
+                        return Results.Ok();
+                    }
+                    catch (NotFoundException)    { return Results.NotFound(); }
+                    catch (OutOfStockException)  { return Results.Conflict(new { code = "OUT_OF_STOCK" }); }
+                    catch (ConcurrencyException) { return Results.StatusCode(409); }
+                })
+                .WithName("confirm reserve")
+                .WithOpenApi();
+
+            // Cancela a reserva
+            app.MapPost("/v1/stock/cancel/{reservationId}",
+                async (IInventoryService service, Guid reservationId) =>
+                {
+                    try
+                    {
+                        await service.CancelAsync(reservationId);
+                        return Results.Ok();
+                    }
+                    catch (NotFoundException)    { return Results.NotFound(); }
+                    catch (ConcurrencyException) { return Results.StatusCode(409); }
+                })
+                .WithName("cancel reserve")
+                .WithOpenApi();
+
+            // Reposição de estoque 
+            app.MapPost("/v1/stock/restock",
+                async (IInventoryService service, RestockRequest req) =>
+                {
+                    try
+                    {
+                        await service.RestockAsync(req.Sku, req.StoreId, req.Qty, req.ExpectedVersion);
+                        return Results.Ok();
+                    }
+                    catch (NotFoundException)    { return Results.NotFound(); }
+                    catch (ConcurrencyException) { return Results.StatusCode(412); }
+                })
+                .WithName("restock")
                 .WithOpenApi();
             
             app.Run();

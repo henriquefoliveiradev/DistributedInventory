@@ -10,5 +10,6 @@ namespace DistributedInventory.Core.Models.Entities
         public int Qty { get; set; }
         public ReserveStatus Status { get; set; } = ReserveStatus.Pending;
         public DateTime ExpiresAt { get; set; }
+        public string? ClientId { get; set; }
     }
 }

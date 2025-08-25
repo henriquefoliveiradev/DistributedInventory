@@ -1,4 +1,4 @@
-namespace DistributedInventory.Core.Models
+namespace DistributedInventory.Core.Models.Entities
 {
     public class OutboxEvent
     {
