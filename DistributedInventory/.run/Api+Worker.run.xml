@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Api+Worker" type="CompoundRunConfigurationType">
+    <toRun name="Api" type="DotNetProject" />
+    <toRun name="Worker" type="DotNetProject" />
+    <method v="2" />
+  </configuration>
+</component>

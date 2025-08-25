@@ -18,4 +18,10 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\DistributedInventory.Core\DistributedInventory.Core.csproj" />
+      <ProjectReference Include="..\DistributedInventory.Infrastructure\DistributedInventory.Infrastructure.csproj" />
+      <ProjectReference Include="..\DistributedInventory.Workers\DistributedInventory.Workers.csproj" />
+    </ItemGroup>
+
 </Project>

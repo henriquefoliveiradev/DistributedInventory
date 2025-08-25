@@ -1,13 +1,24 @@
-namespace DistributedInventory.Workers;
+using DistributedInventory.Infrastructure.Repository;
+using Microsoft.EntityFrameworkCore;
 
-public class Program
+namespace DistributedInventory.Workers
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        var builder = Host.CreateApplicationBuilder(args);
-        builder.Services.AddHostedService<Worker>();
+        public static void Main(string[] args)
+        {
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((context, services) =>
+                {
+                    var path = Path.GetFullPath("..//../data");
+                    string sqLiteConnectionString = context.Configuration.GetConnectionString("Default")
+                                                    ?? $"Data Source={path}/inventory.db;Mode=ReadWriteCreate;Pooling=True;";
 
-        var host = builder.Build();
-        host.Run();
+                    services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(sqLiteConnectionString));
+                    services.AddHostedService<OutboxPublisherWorker>();
+                })
+                .Build()
+                .Run();
+        }
     }
 }
