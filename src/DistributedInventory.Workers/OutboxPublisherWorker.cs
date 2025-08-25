@@ -24,17 +24,17 @@ namespace DistributedInventory.Workers
                 using IServiceScope scope = _scopeFactory.CreateScope();
                 AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                List<OutboxEvent> pending = await db.Outbox.Where(o => o.ProcessedAt == null)
-                    .OrderBy(o => o.OccurredAt).Take(25).ToListAsync(stoppingToken);
+                List<OutboxEvent> recordsPending = await db.Outbox.Where(record => record.ProcessedAt == null)
+                    .OrderBy(record => record.OccurredAt).Take(25).ToListAsync(stoppingToken);
 
-                foreach (OutboxEvent evt in pending)
+                foreach (OutboxEvent record in recordsPending)
                 {
                     // aqui você publicaria no bus; estamos só logando
-                    Console.WriteLine($"[OUTBOX] {evt.Type} {evt.Payload}");
-                    evt.ProcessedAt = DateTime.UtcNow;
+                    Console.WriteLine($"[OUTBOX] {record.Type} {record.Payload}");
+                    record.ProcessedAt = DateTime.UtcNow;
                 }
 
-                if (pending.Count > 0)
+                if (recordsPending.Count > 0)
                     await db.SaveChangesAsync(stoppingToken);
 
                 await Task.Delay(500, stoppingToken);
