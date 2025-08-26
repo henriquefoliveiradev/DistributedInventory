@@ -1,23 +1,34 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
+﻿# ---- build ----
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["DistributedInventory.Api/DistributedInventory.Api.csproj", "DistributedInventory.Api/"]
-RUN dotnet restore "DistributedInventory.Api/DistributedInventory.Api.csproj"
-COPY . .
-WORKDIR "/src/DistributedInventory.Api"
-RUN dotnet build "./DistributedInventory.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./DistributedInventory.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copia csproj e restaura dependências
+COPY DistributedInventory.Api/*.csproj ./DistributedInventory.Api/
+COPY ../DistributedInventory.Core/*.csproj ./DistributedInventory.Core/
+COPY ../DistributedInventory.Infrastructure/*.csproj ./DistributedInventory.Infrastructure/
+RUN dotnet restore ./DistributedInventory.Api/DistributedInventory.Api.csproj
 
-FROM base AS final
+# Copia tudo e publica (Release)
+COPY DistributedInventory.Api/ ./DistributedInventory.Api/
+COPY ../DistributedInventory.Core/ ./DistributedInventory.Core/
+COPY ../DistributedInventory.Infrastructure/ ./DistributedInventory.Infrastructure/
+RUN dotnet publish ./DistributedInventory.Api/DistributedInventory.Api.csproj -c Release -o /app/publish
+
+# ---- runtime ----
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# diretório do SQLite compartilhado
+ENV DATA_DIR=/app/data
+RUN mkdir -p ${DATA_DIR}
+
+# portas e urls
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+# performance e globalization (imagem slim)
+ENV DOTNET_EnableDiagnostics=0
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+COPY --from=build /app/publish ./
 ENTRYPOINT ["dotnet", "DistributedInventory.Api.dll"]

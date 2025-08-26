@@ -1,0 +1,23 @@
+﻿version: "3.9"
+
+services:
+  api:
+    build: ./src/DistributedInventory.Api
+    container_name: distributed-inventory-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data
+
+  worker:
+    build: ./src/DistributedInventory.Workers
+    container_name: distributed-inventory-worker
+    depends_on:
+      - api
+    environment:
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data
