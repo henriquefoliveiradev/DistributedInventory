@@ -16,12 +16,23 @@ namespace DistributedInventory.Api
 
             // Add services
             builder.Services.AddAuthorization();
-            var path = Path.GetFullPath("..//../data");
-
-            var sqLiteConnectionString = builder.Configuration.GetConnectionString("Default") 
-                                         ?? $"Data Source={path}/inventory.db;Mode=ReadWriteCreate;Pooling=True";
             
-            builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(sqLiteConnectionString));
+            var dataDir = Environment.GetEnvironmentVariable("DATA_DIR");
+            string dbPath;
+
+            if (!string.IsNullOrWhiteSpace(dataDir))
+            {
+                Directory.CreateDirectory(dataDir);
+                dbPath = Path.Combine(dataDir, "inventory.db");
+            }
+            else
+            {
+                dbPath = Path.GetFullPath("..//../data/inventory.db");
+            }
+
+            var connectionStringSqlite = $"Data Source={dbPath};Mode=ReadWriteCreate;Pooling=True;Cache=Shared;";
+            builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(connectionStringSqlite));
+            
             
             builder.Services.AddScoped<IInventoryService, EfInventoryService>();
 
@@ -29,8 +40,6 @@ namespace DistributedInventory.Api
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-
-            Directory.CreateDirectory(path);
             
             //Mock db
             using (var scope = app.Services.CreateScope())
@@ -50,11 +59,8 @@ namespace DistributedInventory.Api
             }
             
             // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 

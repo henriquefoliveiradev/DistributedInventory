@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4AAA26DB-835A-43CD-8FC1-BD1082EB4E0F}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedInventory.Api", "src\DistributedInventory.Api\DistributedInventory.Api.csproj", "{5C9EAF94-F4ED-4571-A75F-4F089DACF3E3}"
 EndProject

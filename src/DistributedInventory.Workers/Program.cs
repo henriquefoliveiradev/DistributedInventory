@@ -10,11 +10,22 @@ namespace DistributedInventory.Workers
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
-                    var path = Path.GetFullPath("..//../data");
-                    string sqLiteConnectionString = context.Configuration.GetConnectionString("Default")
-                                                    ?? $"Data Source={path}/inventory.db;Mode=ReadWriteCreate;Pooling=True;";
+                    var dataDir = Environment.GetEnvironmentVariable("DATA_DIR");
+                    string dbPath;
 
-                    services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(sqLiteConnectionString));
+                    if (!string.IsNullOrWhiteSpace(dataDir))
+                    {
+                        Directory.CreateDirectory(dataDir);
+                        dbPath = Path.Combine(dataDir, "inventory.db");
+                    }
+                    else
+                    {
+                        dbPath = Path.GetFullPath("..//../data/inventory.db");
+                    }
+
+                    var connectionStringSqlite = $"Data Source={dbPath};Mode=ReadWriteCreate;Pooling=True;Cache=Shared;";
+                    services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(connectionStringSqlite));
+                    
                     services.AddHostedService<OutboxPublisherWorker>();
                 })
                 .Build()

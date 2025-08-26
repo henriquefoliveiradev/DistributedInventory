@@ -1,19 +1,21 @@
 ﻿version: "3.9"
-
 services:
   api:
-    build: ./src/DistributedInventory.Api
+    build:
+      context: .
+      dockerfile: src/DistributedInventory.Api/Dockerfile
     container_name: distributed-inventory-api
     ports:
       - "5000:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
       - DATA_DIR=/app/data
     volumes:
       - ./data:/app/data
 
   worker:
-    build: ./src/DistributedInventory.Workers
+    build:
+      context: .
+      dockerfile: src/DistributedInventory.Workers/Dockerfile
     container_name: distributed-inventory-worker
     depends_on:
       - api
