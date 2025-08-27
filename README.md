@@ -105,4 +105,4 @@ dotnet test
 ## Arquivos
 Link repo github com a implementação mais completa: https://github.com/henriquefoliveiradev/DistributedInventory.git
 
-Link excalidraw com desenho do design do projeto: https://excalidraw.com/#json=jGUZLoW24YJIu3aq4c6dd,VRlXfdsE4FehgORMlaznuQ
+Link excalidraw com desenho do design do projeto: [https://excalidraw.com/#json=jGUZLoW24YJIu3aq4c6dd,VRlXfdsE4FehgORMlaznuQ](https://excalidraw.com/#json=73p-LKitSGYSMJ5j_v55d,tZEjvwYu1_7BQaIT7eF8kA)
